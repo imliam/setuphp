@@ -57,6 +57,37 @@ class GitCommand extends Command
             return Command::FAILURE;
         }
 
+        if (!file_exists('.gitignore') && confirm('Do you want to create a .gitignore file?', true)) {
+            $gitignore = <<<'GITIGNORE'
+/vendor
+
+/.fleet
+/.idea
+/.nova
+/.zed
+
+.env
+.env.local
+.env.development
+.env.test
+
+/.phpunit.cache
+.phpunit.result.cache
+auth.json
+
+/node_modules
+npm-debug.log
+yarn-error.log
+GITIGNORE;
+
+            info('Creating the .gitignore file');
+
+            if (!$this->createFile('.gitignore', $gitignore)) {
+                error('Failed to create the .gitignore file');
+                return Command::FAILURE;
+            }
+        }
+
         info('Adding all files to the repository');
 
         if (!$this->exec(['git', 'add', '-A'])->isSuccessful()) {

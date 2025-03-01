@@ -20,7 +20,9 @@ if (isset($GLOBALS['_composer_autoload_path'])) {
 $application = new Symfony\Component\Console\Application();
 
 $application->add(new Setuphp\Command\SetuphpCommand());
+$application->add(new Setuphp\Command\ToolingCommand());
 $application->add(new Setuphp\Command\GitCommand());
+$application->add(new Setuphp\Command\CiCommand());
 $application->setDefaultCommand('setuphp');
 
 $application->run();

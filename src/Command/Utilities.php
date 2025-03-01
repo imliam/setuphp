@@ -37,4 +37,45 @@ trait Utilities
 
         return null;
     }
+
+    /** Creates a file and all directories needed to make it. */
+    protected function createFile(string $filePath, string $contents = ''): bool
+    {
+        if (file_exists($filePath)) {
+            return (file_put_contents($filePath, $contents) !== false);
+        }
+
+        $directory = dirname($filePath);
+
+        if (!is_dir($directory)) {
+            if (!mkdir($directory, 0755, true)) {
+                return false;
+            }
+        }
+
+        if (!touch($filePath)) {
+            return false;
+        }
+
+        return file_put_contents($filePath, $contents) !== false;;
+    }
+
+    protected function packageIsInstalled(string $packageName, bool $includeDevDependencies = true): bool
+    {
+        if (!file_exists('composer.json')) {
+            return false;
+        }
+
+        $composerJson = json_decode(file_get_contents('composer.json'), true);
+
+        if (isset($composerJson['require'][$packageName])) {
+            return true;
+        }
+
+        if ($includeDevDependencies && isset($composerJson['require-dev'][$packageName])) {
+            return true;
+        }
+
+        return false;
+    }
 }
