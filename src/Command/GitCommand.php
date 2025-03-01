@@ -37,7 +37,7 @@ class GitCommand extends Command
         if (file_exists('.git')) {
             warning('A git repository already exists in this directory');
 
-            if (!confirm('Do you want to remove the existing git repository?', false)) {
+            if (!confirm('Do you want to remove the existing git repository?', false, hint: 'This will delete your commit history')) {
                 error('Stopping git setup as there is already a git repository');
 
                 return Command::SUCCESS;
