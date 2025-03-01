@@ -1,0 +1,25 @@
+{
+    "name": "imliam/setuphp",
+    "description": "A tool to set up a PHP project quickly",
+    "type": "project",
+    "require": {
+        "symfony/console": "^7.2",
+        "laravel/prompts": "^0.3.5",
+        "symfony/process": "^7.2"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Setuphp\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Liam Hammett",
+            "email": "liam@liamhammett.com"
+        }
+    ],
+    "bin": [
+        "setuphp"
+    ]
+}
