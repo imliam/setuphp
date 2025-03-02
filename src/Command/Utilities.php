@@ -62,6 +62,23 @@ trait Utilities
 
     protected function packageIsInstalled(string $packageName, bool $includeDevDependencies = true): bool
     {
+        if (file_exists('composer.lock')) {
+            die('exists');
+            $composerLock = json_decode(file_get_contents('composer.lock'), true);
+
+            foreach ($composerLock['packages'] as $package) {
+                if ($package['name'] === $packageName) {
+                    return true;
+                }
+
+                foreach ($package['require'] as $require => $version) {
+                    if ($require === $packageName) {
+                        return true;
+                    }
+                }
+            }
+        }
+
         if (!file_exists('composer.json')) {
             return false;
         }

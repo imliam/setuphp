@@ -118,110 +118,114 @@ class ToolingCommand extends Command
             }
         }
 
-        $staticAnalysis = select(
-            label: 'Select your preferred static analysis tool',
-            options: [
-                'none' => 'None',
-                'phpstan' => 'PHPStan' . ($isLaravel ? ' (Larastan)' : ''),
-                'psalm' => 'Psalm' . ($isLaravel ? ' (with Psalm Laravel plugin)' : ''),
-            ],
-            default: 'phpstan',
-        );
+        if (!$this->packageIsInstalled('larastan/larastan') && !$this->packageIsInstalled('phpstan/phpstan') && !$this->packageIsInstalled('vimeo/psalm')) {
+            $staticAnalysis = select(
+                label: 'Select your preferred static analysis tool',
+                options: [
+                    'none' => 'None',
+                    'phpstan' => 'PHPStan' . ($isLaravel ? ' (Larastan)' : ''),
+                    'psalm' => 'Psalm' . ($isLaravel ? ' (with Psalm Laravel plugin)' : ''),
+                ],
+                default: 'phpstan',
+            );
 
-        if ($staticAnalysis === 'phpstan') {
-            if ($isLaravel) {
-                info('Installing Larastan (PHPStan for Laravel)...');
+            if ($staticAnalysis === 'phpstan') {
+                if ($isLaravel) {
+                    info('Installing Larastan (PHPStan for Laravel)...');
 
-                if (!$this->exec(['composer', 'require', 'larastan/larastan', '--dev', '--no-interaction'])->isSuccessful()) {
-                    error('Failed to install Larastan');
+                    if (!$this->exec(['composer', 'require', 'larastan/larastan', '--dev', '--no-interaction'])->isSuccessful()) {
+                        error('Failed to install Larastan');
+                        return Command::FAILURE;
+                    }
+
+                    $neon = <<<NEON
+    includes:
+        - vendor/larastan/larastan/extension.neon
+        - vendor/nesbot/carbon/extension.neon
+
+    parameters:
+
+        paths:
+            - app/
+
+        # Level 10 is the highest level
+        level: 5
+
+    #    ignoreErrors:
+    #        - '#PHPDoc tag @var#'
+    #
+    #    excludePaths:
+    #        - ./*/*/FileToBeExcluded.php
+    NEON;
+
+                    info('Creating phpstan.neon config file');
+
+                    if (!$this->createFile('phpstan.neon', $neon)) {
+                        error('Failed to create the phpstan.neon file');
+                        return Command::FAILURE;
+                    }
+                } else {
+                    info('Installing PHPStan...');
+
+                    if (!$this->exec(['composer', 'require', 'phpstan/phpstan', '--dev', '--no-interaction'])->isSuccessful()) {
+                        error('Failed to install PHPStan');
+                        return Command::FAILURE;
+                    }
+                }
+            } elseif ($staticAnalysis === 'psalm') {
+                info('Installing Psalm...');
+
+                if (!$this->exec(['composer', 'require', 'vimeo/psalm', '--dev', '--no-interaction'])->isSuccessful()) {
+                    error('Failed to install Psalm');
                     return Command::FAILURE;
                 }
 
-                $neon = <<<NEON
-includes:
-    - vendor/larastan/larastan/extension.neon
-    - vendor/nesbot/carbon/extension.neon
-
-parameters:
-
-    paths:
-        - app/
-
-    # Level 10 is the highest level
-    level: 5
-
-#    ignoreErrors:
-#        - '#PHPDoc tag @var#'
-#
-#    excludePaths:
-#        - ./*/*/FileToBeExcluded.php
-NEON;
-
-                info('Creating phpstan.neon config file');
-
-                if (!$this->createFile('phpstan.neon', $neon)) {
-                    error('Failed to create the phpstan.neon file');
-                    return Command::FAILURE;
-                }
-            } else {
-                info('Installing PHPStan...');
-
-                if (!$this->exec(['composer', 'require', 'phpstan/phpstan', '--dev', '--no-interaction'])->isSuccessful()) {
-                    error('Failed to install PHPStan');
-                    return Command::FAILURE;
-                }
-            }
-        } elseif ($staticAnalysis === 'psalm') {
-            info('Installing Psalm...');
-
-            if (!$this->exec(['composer', 'require', 'vimeo/psalm', '--dev', '--no-interaction'])->isSuccessful()) {
-                error('Failed to install Psalm');
-                return Command::FAILURE;
-            }
-
-            if (!$this->exec(['./vendor/bin/psalm', '--init'])->isSuccessful()) {
-                error('Failed to set up Psalm');
-                return Command::FAILURE;
-            }
-
-            if ($isLaravel) {
-                info('Installing Psalm Laravel plugin...');
-
-                if (!$this->exec(['composer', 'require', 'psalm/laravel-plugin', '--dev', '--no-interaction'])->isSuccessful()) {
-                    error('Failed to install Psalm Laravel plugin');
+                if (!$this->exec(['./vendor/bin/psalm', '--init'])->isSuccessful()) {
+                    error('Failed to set up Psalm');
                     return Command::FAILURE;
                 }
 
-                if (!$this->exec(['./vendor/bin/psalm-plugin', 'enable', 'psalm/plugin-laravel', '--no-interaction'])->isSuccessful()) {
-                    error('Failed to enable Psalm Laravel plugin');
-                    return Command::FAILURE;
+                if ($isLaravel) {
+                    info('Installing Psalm Laravel plugin...');
+
+                    if (!$this->exec(['composer', 'require', 'psalm/laravel-plugin', '--dev', '--no-interaction'])->isSuccessful()) {
+                        error('Failed to install Psalm Laravel plugin');
+                        return Command::FAILURE;
+                    }
+
+                    if (!$this->exec(['./vendor/bin/psalm-plugin', 'enable', 'psalm/plugin-laravel', '--no-interaction'])->isSuccessful()) {
+                        error('Failed to enable Psalm Laravel plugin');
+                        return Command::FAILURE;
+                    }
                 }
             }
         }
 
-        $codeStyleTool = select(
-            label: 'Select your preferred code style tool',
-            options: [
-                'none' => 'None',
-                'php-cs-fixer' => 'PHP CS Fixer',
-                'pint' => 'Laravel Pint',
-            ],
-            default: 'php-cs-fixer',
-        );
+        if (!$this->packageIsInstalled('friendsofphp/php-cs-fixer') && !$this->packageIsInstalled('laravel/pint')) {
+            $codeStyleTool = select(
+                label: 'Select your preferred code style tool',
+                options: [
+                    'none' => 'None',
+                    'php-cs-fixer' => 'PHP CS Fixer',
+                    'pint' => 'Laravel Pint',
+                ],
+                default: 'php-cs-fixer',
+            );
 
-        if ($codeStyleTool === 'php-cs-fixer') {
-            info('Installing php-cs-fixer...');
+            if ($codeStyleTool === 'php-cs-fixer') {
+                info('Installing php-cs-fixer...');
 
-            if (!$this->exec(['composer', 'require', 'friendsofphp/php-cs-fixer', '--dev', '--no-interaction'])->isSuccessful()) {
-                error('Failed to install php-cs-fixer');
-                return Command::FAILURE;
-            }
-        } else {
-            info('Installing Laravel Pint...');
+                if (!$this->exec(['composer', 'require', 'friendsofphp/php-cs-fixer', '--dev', '--no-interaction'])->isSuccessful()) {
+                    error('Failed to install php-cs-fixer');
+                    return Command::FAILURE;
+                }
+            } else {
+                info('Installing Laravel Pint...');
 
-            if (!$this->exec(['composer', 'require', 'laravel/pint', '--dev', '--no-interaction'])->isSuccessful()) {
-                error('Failed to install Laravel Pint');
-                return Command::FAILURE;
+                if (!$this->exec(['composer', 'require', 'laravel/pint', '--dev', '--no-interaction'])->isSuccessful()) {
+                    error('Failed to install Laravel Pint');
+                    return Command::FAILURE;
+                }
             }
         }
 
