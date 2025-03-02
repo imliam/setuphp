@@ -5,7 +5,8 @@
     "require": {
         "symfony/console": "^7.2",
         "laravel/prompts": "^0.3.5",
-        "symfony/process": "^7.2"
+        "symfony/process": "^7.2",
+        "composer/semver": "^3.4"
     },
     "license": "MIT",
     "autoload": {

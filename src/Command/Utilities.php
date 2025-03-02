@@ -2,6 +2,7 @@
 
 namespace Setuphp\Command;
 
+use Composer\Semver\VersionParser;
 use Symfony\Component\Process\Process;
 
 /** @mixin \Symfony\Component\Console\Command\Command */
@@ -23,19 +24,21 @@ trait Utilities
 
     protected function getProjectName(): ?string
     {
-        if (file_exists('composer.json')) {
-            $composer = json_decode(file_get_contents('composer.json'), true);
+        return basename(getcwd());
 
-            if (isset($composer['name'])) {
-                if (str_contains($composer['name'], '/')) {
-                    return array_reverse(explode('/', $composer['name']))[0];
-                }
+        // if (file_exists('composer.json')) {
+        //     $composer = json_decode(file_get_contents('composer.json'), true);
 
-                return $composer['name'];
-            }
-        }
+        //     if (isset($composer['name'])) {
+        //         if (str_contains($composer['name'], '/')) {
+        //             return array_reverse(explode('/', $composer['name']))[0];
+        //         }
 
-        return null;
+        //         return $composer['name'];
+        //     }
+        // }
+
+        // return null;
     }
 
     /** Creates a file and all directories needed to make it. */
@@ -93,5 +96,32 @@ trait Utilities
         }
 
         return false;
+    }
+
+    /** Get the "major.minor" formatted PHP version */
+    protected function getPhpVersion(): string
+    {
+        if (file_exists('composer.json')) {
+            $composer = json_decode(file_get_contents('composer.json'), true);
+
+            $parser = new VersionParser();
+
+            if (isset($composer['config']['platform']['php'])) {
+                $version = $parser->parseConstraints($composer['config']['platform']['php'])->getLowerBound()->getVersion();
+                $split = explode('.', $version, 3);
+                return $split[0] . '.' . $split[1];
+            }
+
+            if (isset($composer['require']['php'])) {
+                $version = $parser->parseConstraints($composer['require']['php'])->getLowerBound()->getVersion();
+                $split = explode('.', $version, 3);
+                return $split[0] . '.' . $split[1];
+            }
+        }
+
+        $version = PHP_VERSION;
+        $split = explode('.', $version, 3);
+
+        return $split[0] . '.' . $split[1];
     }
 }

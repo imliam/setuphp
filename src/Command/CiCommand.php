@@ -79,7 +79,7 @@ class CiCommand extends Command
      */
     protected function generateGithubActionsWorkflow(): string
     {
-        $yaml = <<<YAML
+        $yaml = <<<"YAML"
 name: CI
 
 on: [push, pull_request]
@@ -92,7 +92,7 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.0'
+          php-version: '{$this->getPhpVersion()}'
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-suggest
 YAML;
@@ -145,12 +145,12 @@ YAML;
     /** Generate a GitLab CI configuration YAML string. */
     protected function generateGitlabCiConfig(): string
     {
-        $yaml = <<<YAML
+        $yaml = <<<"YAML"
 stages:
   - test
 
 test:
-  image: php:8.0
+  image: php:{$this->getPhpVersion()}
   script:
     - composer install --prefer-dist --no-progress --no-suggest
 YAML;
